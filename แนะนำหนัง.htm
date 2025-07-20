@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แนะนำหนัง-ซีรีส์</title>
+    <style>
+        /* --- CSS Styles --- */
+        :root {
+            --primary-color: #e50914; /* Netflix Red */
+            --dark-color: #141414;
+            --light-dark-color: #222;
+            --text-color: #fff;
+            --text-secondary: #aaa;
+            --border-color: #444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--dark-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        header h1 {
+            color: var(--primary-color);
+            font-size: 2.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        #admin-login-btn {
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        #admin-login-btn:hover {
+            background-color: #f40612;
+        }
+
+        main h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            border-left: 5px solid var(--primary-color);
+            padding-left: 10px;
+        }
+
+        #movie-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .movie-card {
+            background-color: var(--light-dark-color);
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+        }
+
+        .movie-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(229, 9, 20, 0.5);
+        }
+
+        .movie-card img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+        }
+
+        .movie-card-title {
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* --- Modal Styles --- */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-content {
+            background-color: var(--light-dark-color);
+            margin: 5% auto;
+            padding: 30px;
+            border: 1px solid var(--border-color);
+            width: 80%;
+            max-width: 800px;
+            border-radius: 10px;
+            position: relative;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .close-btn {
+            color: var(--text-secondary);
+            position: absolute;
+            top: 15px;
+            right: 25px;
+            font-size: 35px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-btn:hover { color: var(--text-color); }
+
+        .modal-body {
+            display: flex;
+            gap: 30px;
+        }
+
+        .modal-poster img {
+            width: 250px;
+            border-radius: 8px;
+        }
+
+        .modal-details h2 {
+            color: var(--primary-color);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .modal-details h3 {
+             margin-top: 20px;
+             border-bottom: 1px solid var(--border-color);
+             padding-bottom: 5px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px 20px;
+            margin-top: 15px;
+        }
+
+        .info-grid p { margin: 5px 0; }
+        .info-grid strong { color: var(--text-secondary); }
+
+        /* --- Admin Panel --- */
+        #admin-panel, #login-section {
+            display: none; /* Hidden by default */
+            background-color: var(--light-dark-color);
+            padding: 30px;
+            margin-top: 30px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        #login-section {
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-secondary);
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            background-color: #333;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            color: var(--text-color);
+        }
+
+        .form-grid {
+             display: grid;
+             grid-template-columns: repeat(3, 1fr);
+             gap: 15px;
+        }
+
+        .form-grid-full {
+            grid-column: 1 / -1;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: opacity 0.3s;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn-primary { background-color: var(--primary-color); color: var(--text-color); }
+        .btn-secondary { background-color: #555; color: var(--text-color); }
+        .btn-danger { background-color: #dc3545; color: white; }
+
+        .admin-actions { margin-top: 20px; }
+
+        #logout-btn { float: right; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Flickhub</h1>
+        <button id="admin-login-btn" class="btn">🔑 เข้าสู่ระบบผู้ดูแล</button>
+    </header>
+
+    <div class="container">
+        <section id="login-section">
+            <h2>ล็อกอินผู้ดูแล</h2>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username">ชื่อผู้ใช้:</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">รหัสผ่าน:</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">เข้าสู่ระบบ</button>
+                 <p id="login-error" style="color: var(--primary-color); margin-top: 10px; display: none;">ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง!</p>
+            </form>
+        </section>
+
+        <section id="admin-panel">
+            <h2>ส่วนจัดการข้อมูล (Admin) <button id="logout-btn" class="btn btn-secondary">ออกจากระบบ</button></h2>
+
+            <form id="add-movie-form">
+                <h3>เพิ่มหนัง/ซีรีส์ใหม่</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="nameTH">ชื่อไทย</label>
+                        <input type="text" id="nameTH" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="nameEN">ชื่ออังกฤษ</label>
+                        <input type="text" id="nameEN">
+                    </div>
+                    <div class="form-group">
+                        <label for="country">ประเทศ</label>
+                        <select id="country">
+                            <option>ไทย</option>
+                            <option>เกาหลี</option>
+                            <option>จีน</option>
+                            <option>ญี่ปุ่น</option>
+                            <option>อังกฤษ</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="genre">ประเภท</label>
+                        <input type="text" id="genre" placeholder="เช่น แอ็คชั่น, ดราม่า">
+                    </div>
+                    <div class="form-group">
+                        <label for="year">ปีที่ฉาย</label>
+                        <input type="number" id="year">
+                    </div>
+                    <div class="form-group">
+                        <label for="duration">ระยะเวลา/ตอน (นาที)</label>
+                        <input type="text" id="duration">
+                    </div>
+                    <div class="form-group">
+                        <label for="seasons">จำนวนซีซั่น</label>
+                        <input type="text" id="seasons" value="1">
+                    </div>
+                     <div class="form-group">
+                        <label for="episodes">จำนวนตอน</label>
+                        <input type="text" id="episodes" value="1">
+                    </div>
+                     <div class="form-group">
+                        <label for="audio">เสียงพากย์</label>
+                        <input type="text" id="audio" value="ไทย, อังกฤษ">
+                    </div>
+                     <div class="form-group">
+                        <label for="subtitle">คำบรรยาย</label>
+                        <input type="text" id="subtitle" value="ไทย, อังกฤษ">
+                    </div>
+                    <div class="form-group">
+                        <label for="platform1">แพลตฟอร์ม 1</label>
+                        <input type="text" id="platform1">
+                    </div>
+                    <div class="form-group">
+                        <label for="platform2">แพลตฟอร์ม 2</label>
+                        <input type="text" id="platform2">
+                    </div>
+                    <div class="form-group form-grid-full">
+                        <label for="posterURL">URL โปสเตอร์หนัง</label>
+                        <input type="url" id="posterURL" required>
+                    </div>
+                    <div class="form-group form-grid-full">
+                        <label for="synopsis">เรื่องย่อ</label>
+                        <textarea id="synopsis" rows="4"></textarea>
+                    </div>
+                     <div class="form-group">
+                        <label for="music">เพลงประกอบ</label>
+                        <input type="text" id="music">
+                    </div>
+                     <div class="form-group">
+                        <label for="writer">ผู้เขียนบท</label>
+                        <input type="text" id="writer">
+                    </div>
+                     <div class="form-group">
+                        <label for="director">ผู้กำกับ</label>
+                        <input type="text" id="director">
+                    </div>
+                     <div class="form-group form-grid-full">
+                        <label for="cast">นักแสดง</label>
+                        <input type="text" id="cast">
+                    </div>
+                     <div class="form-group form-grid-full">
+                        <label for="studio">ค่ายหนัง</label>
+                        <input type="text" id="studio">
+                    </div>
+                </div>
+                <div class="admin-actions">
+                    <button type="submit" class="btn btn-primary">เพิ่มข้อมูล</button>
+                </div>
+            </form>
+
+            <hr style="border-color: var(--border-color); margin: 30px 0;">
+
+            <h3>อัปโหลดข้อมูลจากไฟล์ .html</h3>
+            <div class="form-group">
+                <label for="html-upload">เลือกไฟล์ .html ที่มีตารางข้อมูล (ดูโครงสร้างไฟล์ตัวอย่าง)</label>
+                <input type="file" id="html-upload" accept=".html">
+            </div>
+             <button id="upload-btn" class="btn btn-primary">อัปโหลดและเพิ่มข้อมูล</button>
+        </section>
+
+        <main id="main-content">
+            <h2>รายการล่าสุด</h2>
+            <div id="movie-grid">
+                </div>
+        </main>
+    </div>
+
+    <div id="movie-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <div id="modal-body-content" class="modal-body">
+                </div>
+             <button id="delete-movie-btn" class="btn btn-danger" style="margin-top: 20px; display: none;">ลบข้อมูลนี้</button>
+        </div>
+    </div>
+
+
+    <script>
+    // --- JavaScript Logic ---
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- Sample Data ---
+        // นี่คือข้อมูลตัวอย่าง ถ้าไม่มีข้อมูลใน LocalStorage ระบบจะใช้ข้อมูลชุดนี้
+        const initialMovies = [
+            {
+                nameTH: "บุพเพสันนิวาส 2",
+                nameEN: "Love Destiny The Movie",
+                country: "ไทย",
+                genre: "โรแมนติก, คอมเมดี้, ประวัติศาสตร์",
+                year: 2022,
+                duration: "166",
+                seasons: "N/A",
+                episodes: "ภาพยนตร์",
+                audio: "ไทย",
+                subtitle: "ไทย, อังกฤษ",
+                platform1: "Netflix",
+                platform2: "",
+                posterURL: "https://i.mydramalist.com/v85gY_4f.jpg",
+                synopsis: "เรื่องราวความรักข้ามภพชาติของ เกสร และ ภพ ที่เกิดขึ้นในสมัยรัตนโกสินทร์ตอนต้น เมื่อโชคชะตานำพาให้ทั้งสองมาพบกันอีกครั้ง พร้อมกับภารกิจสำคัญที่เกี่ยวพันกับประวัติศาสตร์ของสยามประเทศ",
+                music: "ถ้าเธอรักใครคนหนึ่ง - INK WARUNTORN",
+                writer: "รอมแพง",
+                director: "อดิสรณ์ ตรีสิริเกษม",
+                cast: "ธนวรรธน์ วรรธนะภูติ, ราณี แคมเปน, พาริส อินทรโกมาลย์สุต",
+                studio: "GDH"
+            },
+            {
+                nameTH: "ปรมาจารย์ลัทธิมาร",
+                nameEN: "The Untamed",
+                country: "จีน",
+                genre: "แฟนตาซี, กำลังภายใน, มิตรภาพ",
+                year: 2019,
+                duration: "45",
+                seasons: "1",
+                episodes: "50",
+                audio: "จีน, ไทย",
+                subtitle: "ไทย, อังกฤษ",
+                platform1: "WeTV",
+                platform2: "Netflix",
+                posterURL: "https://i.mydramalist.com/2Yv7r_4f.jpg",
+                synopsis: "เว่ยอู๋เซี่ยน ปรมาจารย์อี๋หลิงที่ใครๆ ก็กล่าวหาว่าเป็นคนชั่วช้า ได้กลับมามีชีวิตอีกครั้งใน 16 ปีต่อมา และได้พบกับหลานวั่งจี สหายเก่าจากตระกูลหลาน ทั้งสองร่วมกันไขปริศนาในอดีตและเปิดโปงความจริงเบื้องหลังเหตุการณ์ร้ายแรงที่เคยเกิดขึ้น",
+                music: "อู๋จี (无羁)",
+                writer: "โม่เซียงถงซิ่ว (นิยาย)",
+                director: "Zheng Weiwen, Chen Jialin",
+                cast: "เซียวจ้าน, หวังอี้ป๋อ",
+                studio: "Tencent Penguin Pictures"
+            },
+            {
+                nameTH: "คิงดอม",
+                nameEN: "Kingdom",
+                country: "เกาหลี",
+                genre: "สยองขวัญ, ซอมบี้, ประวัติศาสตร์",
+                year: 2019,
+                duration: "50",
+                seasons: "2",
+                episodes: "12",
+                audio: "เกาหลี, ไทย, อังกฤษ",
+                subtitle: "ไทย, อังกฤษ",
+                platform1: "Netflix",
+                platform2: "",
+                posterURL: "https://i.mydramalist.com/dRoQz_4f.jpg",
+                synopsis: "ในยุคโชซอน องค์ชายรัชทายาทอีชางต้องสืบหาความจริงเกี่ยวกับอาการป่วยของพระราชา แต่กลับต้องเผชิญกับโรคระบาดปริศนาที่เปลี่ยนคนตายให้กลายเป็นอสูรกายกระหายเลือด เขาต้องต่อสู้เพื่อปกป้องอาณาจักรและประชาชนจากหายนะครั้งนี้",
+                music: "N/A",
+                writer: "คิมอึนฮี",
+                director: "คิมซองฮุน",
+                cast: "จูจีฮุน, แบดูนา, รยูซึงรยง",
+                studio: "AStory"
+            }
+        ];
+
+        // --- Global Variables & Selectors ---
+        let movies = [];
+        let loggedIn = false;
+
+        const movieGrid = document.getElementById('movie-grid');
+        const modal = document.getElementById('movie-modal');
+        const modalBody = document.getElementById('modal-body-content');
+        const closeModalBtn = document.querySelector('.close-btn');
+        const deleteMovieBtn = document.getElementById('delete-movie-btn');
+
+        const loginSection = document.getElementById('login-section');
+        const adminPanel = document.getElementById('admin-panel');
+        const mainContent = document.getElementById('main-content');
+        const adminLoginBtn = document.getElementById('admin-login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const loginForm = document.getElementById('login-form');
+        const addMovieForm = document.getElementById('add-movie-form');
+        const uploadBtn = document.getElementById('upload-btn');
+        const htmlUploadInput = document.getElementById('html-upload');
+
+        // --- Data Functions ---
+        const getMoviesFromStorage = () => {
+            const storedMovies = localStorage.getItem('moviesDB');
+            if (storedMovies) {
+                return JSON.parse(storedMovies);
+            } else {
+                // If no data in storage, use initial data and save it
+                localStorage.setItem('moviesDB', JSON.stringify(initialMovies));
+                return initialMovies;
+            }
+        };
+
+        const saveMoviesToStorage = (moviesData) => {
+            localStorage.setItem('moviesDB', JSON.stringify(moviesData));
+        };
+
+        // --- Render Functions ---
+        const renderMovies = () => {
+            movieGrid.innerHTML = ''; // Clear existing grid
+            movies.forEach((movie, index) => {
+                const movieCard = document.createElement('div');
+                movieCard.className = 'movie-card';
+                movieCard.dataset.index = index; // Use index to find movie data
+                movieCard.innerHTML = `
+                    <img src="${movie.posterURL}" alt="${movie.nameTH}">
+                    <div class="movie-card-title">${movie.nameTH}</div>
+                `;
+                movieCard.addEventListener('click', () => showMovieDetails(index));
+                movieGrid.appendChild(movieCard);
+            });
+        };
+
+        const showMovieDetails = (index) => {
+            const movie = movies[index];
+            modalBody.innerHTML = `
+                <div class="modal-poster">
+                    <img src="${movie.posterURL}" alt="${movie.nameTH}">
+                </div>
+                <div class="modal-details">
+                    <h2>${movie.nameTH}</h2>
+                    <h4>${movie.nameEN || ''}</h4>
+                    <p>${movie.synopsis || 'ไม่มีข้อมูลเรื่องย่อ'}</p>
+
+                    <h3><span style="color:var(--primary-color)">ℹ️</span> รายละเอียด</h3>
+                    <div class="info-grid">
+                        <p><strong>ประเทศ:</strong> ${movie.country || 'N/A'}</p>
+                        <p><strong>ประเภท:</strong> ${movie.genre || 'N/A'}</p>
+                        <p><strong>ปีที่ฉาย:</strong> ${movie.year || 'N/A'}</p>
+                        <p><strong>ซีซั่น:</strong> ${movie.seasons || 'N/A'}</p>
+                        <p><strong>จำนวนตอน:</strong> ${movie.episodes || 'N/A'}</p>
+                        <p><strong>เวลา/ตอน:</strong> ${movie.duration || 'N/A'} นาที</p>
+                        <p><strong>เสียงพากย์:</strong> ${movie.audio || 'N/A'}</p>
+                        <p><strong>คำบรรยาย:</strong> ${movie.subtitle || 'N/A'}</p>
+                        <p><strong>แพลตฟอร์ม:</strong> ${[movie.platform1, movie.platform2].filter(Boolean).join(', ') || 'N/A'}</p>
+                    </div>
+
+                    <h3><span style="color:var(--primary-color)">🎬</span> ทีมงานและอื่นๆ</h3>
+                     <div class="info-grid">
+                        <p><strong>ผู้กำกับ:</strong> ${movie.director || 'N/A'}</p>
+                        <p><strong>ผู้เขียนบท:</strong> ${movie.writer || 'N/A'}</p>
+                        <p><strong>ค่ายหนัง:</strong> ${movie.studio || 'N/A'}</p>
+                        <p><strong>เพลงประกอบ:</strong> ${movie.music || 'N/A'}</p>
+                        <p><strong>นักแสดง:</strong> ${movie.cast || 'N/A'}</p>
+                    </div>
+                </div>
+            `;
+            deleteMovieBtn.dataset.index = index; // Set index for deletion
+            if(loggedIn) {
+                deleteMovieBtn.style.display = 'block';
+            }
+            modal.style.display = 'block';
+        };
+
+        const closeModal = () => {
+            modal.style.display = 'none';
+        };
+
+        // --- Admin Functions ---
+        const showAdminView = (isLoggedIn) => {
+            loggedIn = isLoggedIn;
+            if (isLoggedIn) {
+                adminPanel.style.display = 'block';
+                loginSection.style.display = 'none';
+                mainContent.style.display = 'block';
+                adminLoginBtn.style.display = 'none';
+                 if (modal.style.display === 'block') {
+                    deleteMovieBtn.style.display = 'block';
+                }
+            } else {
+                adminPanel.style.display = 'none';
+                loginSection.style.display = 'none'; // Hide login form by default
+                mainContent.style.display = 'block';
+                adminLoginBtn.style.display = 'block';
+                deleteMovieBtn.style.display = 'none';
+            }
+        };
+
+        const handleLogin = (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const loginError = document.getElementById('login-error');
+
+            // IMPORTANT: This is NOT secure. For demonstration only.
+            if (username === 'admin' && password === 'SS9362') {
+                sessionStorage.setItem('isAdminLoggedIn', 'true'); // Use sessionStorage
+                showAdminView(true);
+                loginError.style.display = 'none';
+            } else {
+                 loginError.style.display = 'block';
+            }
+        };
+
+        const handleLogout = () => {
+             sessionStorage.removeItem('isAdminLoggedIn');
+             showAdminView(false);
+        };
+
+        const handleAddMovie = (e) => {
+            e.preventDefault();
+            const newMovie = {
+                nameTH: document.getElementById('nameTH').value,
+                nameEN: document.getElementById('nameEN').value,
+                country: document.getElementById('country').value,
+                genre: document.getElementById('genre').value,
+                year: document.getElementById('year').value,
+                duration: document.getElementById('duration').value,
+                seasons: document.getElementById('seasons').value,
+                episodes: document.getElementById('episodes').value,
+                audio: document.getElementById('audio').value,
+                subtitle: document.getElementById('subtitle').value,
+                platform1: document.getElementById('platform1').value,
+                platform2: document.getElementById('platform2').value,
+                posterURL: document.getElementById('posterURL').value,
+                synopsis: document.getElementById('synopsis').value,
+                music: document.getElementById('music').value,
+                writer: document.getElementById('writer').value,
+                director: document.getElementById('director').value,
+                cast: document.getElementById('cast').value,
+                studio: document.getElementById('studio').value,
+            };
+
+            movies.unshift(newMovie); // Add to the beginning of the array
+            saveMoviesToStorage(movies);
+            renderMovies();
+            addMovieForm.reset();
+            alert('เพิ่มข้อมูลหนังเรียบร้อยแล้ว!');
+        };
+
+        const handleDeleteMovie = () => {
+            const indexToDelete = deleteMovieBtn.dataset.index;
+            if (confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบเรื่อง "${movies[indexToDelete].nameTH}"?`)) {
+                movies.splice(indexToDelete, 1); // Remove the movie from array
+                saveMoviesToStorage(movies);
+                renderMovies();
+                closeModal();
+                alert('ลบข้อมูลเรียบร้อยแล้ว');
+            }
+        };
+
+        const handleFileUpload = () => {
+            const file = htmlUploadInput.files[0];
+            if (!file) {
+                alert('กรุณาเลือกไฟล์ก่อน');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(content, 'text/html');
+                const rows = doc.querySelectorAll('tbody tr');
+
+                if (rows.length === 0) {
+                    alert('ไม่พบข้อมูลในตารางของไฟล์ HTML');
+                    return;
+                }
+
+                let addedCount = 0;
+                rows.forEach(row => {
+                    const cells = row.querySelectorAll('td');
+                    if(cells.length < 18) return; // Skip if not enough columns
+
+                    const movieData = {
+                        nameTH: cells[0].textContent,
+                        nameEN: cells[1].textContent,
+                        country: cells[2].textContent,
+                        genre: cells[3].textContent,
+                        year: cells[4].textContent,
+                        seasons: cells[5].textContent,
+                        episodes: cells[6].textContent,
+                        duration: cells[7].textContent,
+                        audio: cells[8].textContent,
+                        subtitle: cells[9].textContent,
+                        platform1: cells[10].textContent,
+                        platform2: cells[11].textContent,
+                        posterURL: cells[12].textContent,
+                        synopsis: cells[13].textContent,
+                        music: cells[14].textContent,
+                        writer: cells[15].textContent,
+                        director: cells[16].textContent,
+                        cast: cells[17].textContent,
+                        studio: cells[18].textContent,
+                    };
+                    movies.unshift(movieData);
+                    addedCount++;
+                });
+
+                saveMoviesToStorage(movies);
+                renderMovies();
+                htmlUploadInput.value = ''; // Reset file input
+                alert(`เพิ่มข้อมูลจากไฟล์สำเร็จ ${addedCount} รายการ!`);
+            };
+            reader.readAsText(file);
+        };
+
+
+        // --- Event Listeners ---
+        closeModalBtn.addEventListener('click', closeModal);
+        window.addEventListener('click', (e) => {
+            if (e.target == modal) {
+                closeModal();
+            }
+        });
+
+        adminLoginBtn.addEventListener('click', () => {
+            loginSection.style.display = 'block';
+            mainContent.style.display = 'none'; // Hide main content while logging in
+        });
+
+        loginForm.addEventListener('submit', handleLogin);
+        logoutBtn.addEventListener('click', handleLogout);
+        addMovieForm.addEventListener('submit', handleAddMovie);
+        deleteMovieBtn.addEventListener('click', handleDeleteMovie);
+        uploadBtn.addEventListener('click', handleFileUpload);
+
+
+        // --- Initial Load ---
+        movies = getMoviesFromStorage();
+        if (sessionStorage.getItem('isAdminLoggedIn') === 'true') {
+            showAdminView(true);
+        } else {
+            showAdminView(false);
+        }
+        renderMovies();
+    });
+    </script>
+</body>
+</html>
